@@ -2,29 +2,30 @@
 
 | 字段 | 值 |
 |---|---|
-| 版本 | `lucy-k8s-integration-20260827-v1` |
+| 版本 | `lucy-k8s-integration-20260827-v2` |
 | 日期 | 2026-08-27 |
-| 镜像 | `project-lucy:customer-amd64-0.16.0`（linux/amd64） |
+| 镜像 | `project-lucy:customer-amd64-0.16.0`（linux/amd64，ELF 已校验为 x86-64） |
+| 镜像 digest | 见 `image/image-digest.txt` |
 | KTX | `@kaelio/ktx@0.16.0` |
 | 手册仓库 | https://github.com/Forrest219/lucy-customer-delivery |
 
-## 相对 20260727-v2 的变更
+## 紧急：请用本版替换 v1
 
-- 文档与部署契约对齐正式 chart 约束：`replicas=1`、`Recreate`、Service 仅 5174/7879、严禁暴露 7878、RWO PVC `/data/lucy`。
-- 明确双渠道：GitHub 仅手册；镜像大包（本 tar.gz）另渠道交付。
-- 提供 `values-example.yaml`（参数示例，非可直接 helm install）。
-- 提供可现场执行的 `验收命令.sh`。
-- 附 `customer-config-template/` 与 `reference/helm-chart/` 只读参考快照。
+`lucy-k8s-integration-20260827-v1` **已作废**。该包镜像元数据标 amd64，但层内 `tini`/`node` 实为 aarch64，在客户 x86_64 上会报：
 
-## 范围
+```text
+exec /usr/bin/tini: exec format error
+```
 
-- 面向客户已有 K8s/Helm/GitOps 的集成。
-- 不含可直接安装的 Lucy Helm Chart 主交付物。
-- 不含 K3s 离线安装包、数据库本体、明文密钥。
+v2 已在交付侧重跑 G1–G4（元数据 + ELF node/tini + `docker run` + ktx 版本）后再打包。
 
 ## 客户动作
 
-1. `shasum -a 256 -c SHA256SUMS`
-2. 阅读 `请先阅读.md` → `集成说明.md`
-3. `docker load` 镜像并按贵司方式部署
-4. `bash 验收命令.sh`，把输出回传交付方
+```bash
+shasum -a 256 -c lucy-k8s-integration-delivery-20260827-v2.tar.gz.sha256
+tar -xzf lucy-k8s-integration-delivery-20260827-v2.tar.gz
+cd lucy-k8s-integration-delivery-20260827-v2
+# 先阅读「请先阅读.md」
+nerdctl load -i image/project-lucy-customer-amd64-0.16.0-image.tar   # 或 docker load
+nerdctl run --rm project-lucy:customer-amd64-0.16.0 /bin/sh -c 'echo ok'
+```
