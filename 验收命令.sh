@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Lucy K8s 集成验收脚本 — 20260827-v1
+# Lucy K8s 集成验收脚本 — 20260827-v3
 # 用法：在已 kubectl 指向目标集群的环境执行。
-# 可覆盖环境变量：NAMESPACE DEPLOYMENT SERVICE CONTAINER IMAGE_TAR MCP_URL TOKEN CONNECTION_ID
+# 可覆盖环境变量：NAMESPACE DEPLOYMENT SERVICE CONTAINER IMAGE_TAR IMAGE_REF MCP_URL TOKEN CONNECTION_ID
 
 set -euo pipefail
 
@@ -9,7 +9,8 @@ NAMESPACE="${NAMESPACE:-lucy}"
 DEPLOYMENT="${DEPLOYMENT:-lucy}"
 SERVICE="${SERVICE:-lucy}"
 CONTAINER="${CONTAINER:-lucy}"
-IMAGE_TAR="${IMAGE_TAR:-image/project-lucy-customer-amd64-0.16.0-image.tar}"
+IMAGE_TAR="${IMAGE_TAR:-image/project-lucy-customer-amd64-0.16.0-v3-image.tar}"
+IMAGE_REF="${IMAGE_REF:-project-lucy:customer-amd64-0.16.0-v3}"
 MCP_URL="${MCP_URL:-}"
 TOKEN="${TOKEN:-}"
 CONNECTION_ID="${CONNECTION_ID:-}"
@@ -34,16 +35,24 @@ else
 fi
 
 if [[ -f "$IMAGE_TAR" ]]; then
-  if docker image inspect project-lucy:customer-amd64-0.16.0 >/dev/null 2>&1 \
-    || docker load -i "$IMAGE_TAR" >/dev/null; then
-    arch=$(docker image inspect project-lucy:customer-amd64-0.16.0 --format '{{.Os}}/{{.Architecture}}' 2>/dev/null || true)
+  if docker load -i "$IMAGE_TAR" >/tmp/lucy-image-load.out 2>&1; then
+    ok "docker load $IMAGE_TAR"
+    arch=$(docker image inspect "$IMAGE_REF" --format '{{.Os}}/{{.Architecture}}' 2>/dev/null || true)
     if [[ "$arch" == "linux/amd64" ]]; then
       ok "镜像架构 linux/amd64"
     else
       bad "镜像架构应为 linux/amd64，实际=${arch:-unknown}"
     fi
+    image_ver=$(docker run --rm --platform linux/amd64 --entrypoint /bin/sh "$IMAGE_REF" -c 'ktx --version' 2>/tmp/lucy-image-run.err || true)
+    if echo "$image_ver" | grep -q '0.16.0'; then
+      ok "镜像可执行 ktx --version => $image_ver"
+    else
+      bad "镜像执行 ktx --version 失败，实际=${image_ver:-empty}"
+      tail -20 /tmp/lucy-image-run.err
+    fi
   else
-    bad "docker load / inspect 失败"
+    bad "docker load 失败"
+    tail -20 /tmp/lucy-image-load.out
   fi
 else
   echo "[SKIP] 本地无 $IMAGE_TAR（若镜像已在集群节点可忽略）"

@@ -2,21 +2,25 @@
 
 本仓库**存放客户 IT 部署手册与参数示例**。镜像大包见 GitHub Releases。
 
-## 当前版本（请用 v2）
+## 当前版本（请用 v3）
 
-- Release：[`lucy-k8s-integration-20260827-v2`](https://github.com/Forrest219/lucy-customer-delivery/releases/tag/lucy-k8s-integration-20260827-v2)
-- 镜像：`project-lucy:customer-amd64-0.16.0`（linux/amd64，**ELF x86-64 已校验**）
+- Release：[`lucy-k8s-integration-20260827-v3`](https://github.com/Forrest219/lucy-customer-delivery/releases/tag/lucy-k8s-integration-20260827-v3)
+- 镜像：`project-lucy:customer-amd64-0.16.0-v3`（linux/amd64，**ELF x86-64 已校验**）
 - KTX：`@kaelio/ktx@0.16.0`
 
 ### ⛔ 勿用 v1
 
 [`lucy-k8s-integration-20260827-v1`](https://github.com/Forrest219/lucy-customer-delivery/releases/tag/lucy-k8s-integration-20260827-v1) 已作废（镜像层内为 arm64 ELF，x86 节点会 `exec format error`）。
 
+### 说明：相对 v2
+
+v3 为架构修复后的再清洁构建（清理镜像内历史配置残留），镜像 tag 带 `-v3`。请用本版替换此前所有包。
+
 ## 下载
 
 ```text
-https://github.com/Forrest219/lucy-customer-delivery/releases/download/lucy-k8s-integration-20260827-v2/lucy-k8s-integration-delivery-20260827-v2.tar.gz
-https://github.com/Forrest219/lucy-customer-delivery/releases/download/lucy-k8s-integration-20260827-v2/lucy-k8s-integration-delivery-20260827-v2.tar.gz.sha256
+https://github.com/Forrest219/lucy-customer-delivery/releases/download/lucy-k8s-integration-20260827-v3/lucy-k8s-integration-delivery-20260827-v3.tar.gz
+https://github.com/Forrest219/lucy-customer-delivery/releases/download/lucy-k8s-integration-20260827-v3/lucy-k8s-integration-delivery-20260827-v3.tar.gz.sha256
 ```
 
 ## 阅读顺序

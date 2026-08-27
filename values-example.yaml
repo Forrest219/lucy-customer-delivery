@@ -1,14 +1,14 @@
 # 这是参数示例（NOT installable values）
 # 请按贵司自有 Helm Chart / GitOps 抄用相关字段；本文件不能直接 `helm install`。
-# 字段名与参考 chart reference/helm-chart/values.yaml 对齐，便于对照。
+# 字段名为建议示例；请按贵司自有 Chart / GitOps 映射。
 #
-# 交付版本: lucy-k8s-integration-20260827-v1
-# 镜像: project-lucy:customer-amd64-0.16.0 (linux/amd64)
+# 交付版本: lucy-k8s-integration-20260827-v3
+# 镜像: project-lucy:customer-amd64-0.16.0-v3 (linux/amd64)
 # KTX: @kaelio/ktx@0.16.0
 
 image:
   repository: REPLACE-ME-registry.example.com/data-team/project-lucy
-  tag: "customer-amd64-0.16.0"
+  tag: "customer-amd64-0.16.0-v3"
   pullPolicy: IfNotPresent   # 无 registry、节点已 docker load 时可改为 Never
 imagePullSecrets: []         # 私有 registry 时填 dockerconfigjson Secret 名
 

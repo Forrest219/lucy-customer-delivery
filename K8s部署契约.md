@@ -1,6 +1,6 @@
-# Lucy K8s 部署契约（20260827-v1）
+# Lucy K8s 部署契约（20260827-v3）
 
-客户平台工程接入 Lucy 时必须遵守以下硬约束。与参考 chart `reference/helm-chart/` 一致。
+客户平台工程接入 Lucy 时必须遵守以下硬约束。请在贵司自有 Chart / GitOps 中落实这些配置。
 
 ## 1. 工作负载
 
