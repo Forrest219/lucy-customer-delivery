@@ -1,14 +1,14 @@
 # 这是参数示例（NOT installable values）
 # 请按贵司自有 Helm Chart / GitOps 抄用相关字段；本文件不能直接 `helm install`。
-# 字段名为建议示例；请按贵司自有 Chart / GitOps 映射。
+# 字段名与参考 chart reference/helm-chart/values.yaml 对齐，便于对照。
 #
-# 交付版本: lucy-k8s-integration-20260827-v3
-# 镜像: project-lucy:customer-amd64-0.16.0-v3 (linux/amd64)
+# 交付版本: lucy-k8s-integration-20260828-v1
+# 镜像: project-lucy:customer-amd64-0.16.0 (linux/amd64)
 # KTX: @kaelio/ktx@0.16.0
 
 image:
   repository: REPLACE-ME-registry.example.com/data-team/project-lucy
-  tag: "customer-amd64-0.16.0-v3"
+  tag: "customer-amd64-0.16.0"
   pullPolicy: IfNotPresent   # 无 registry、节点已 docker load 时可改为 Never
 imagePullSecrets: []         # 私有 registry 时填 dockerconfigjson Secret 名
 
@@ -30,6 +30,9 @@ persistence:
   storageClass: REPLACE-ME-storage-class
 
 env:
+  # REQUIRED：外部可达 MCP Advertise URL（Agent 唯一应配置的地址）。
+  # 禁止留空、保留 REPLACE-ME、或填 127.0.0.1/localhost/Pod IP。
+  # 参考 chart 在 image.repository 为客户 registry 时会对空/占位 URL fail 渲染。
   LUCY_PUBLIC_MCP_URL: "REPLACE-ME-https://lucy.example.com/mcp"
   LUCY_ALLOW_PLACEHOLDER_KTX: ""   # 生产必须空；首次 seed 可临时设 "1"
   KTX_PROJECT_ROOT: /data/lucy

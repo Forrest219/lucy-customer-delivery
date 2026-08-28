@@ -2,25 +2,30 @@
 
 本仓库**存放客户 IT 部署手册与参数示例**。镜像大包见 GitHub Releases。
 
-## 当前版本（请用 v3）
+## 当前版本（请用 20260828-v1）
 
-- Release：[`lucy-k8s-integration-20260827-v3`](https://github.com/Forrest219/lucy-customer-delivery/releases/tag/lucy-k8s-integration-20260827-v3)
-- 镜像：`project-lucy:customer-amd64-0.16.0-v3`（linux/amd64，**ELF x86-64 已校验**）
+- Release：[`lucy-k8s-integration-20260828-v1`](https://github.com/Forrest219/lucy-customer-delivery/releases/tag/lucy-k8s-integration-20260828-v1)
+- 镜像：`project-lucy:customer-amd64-0.16.0`（linux/amd64，**ELF x86-64 + KTX Python runtime G4b 已校验**）
 - KTX：`@kaelio/ktx@0.16.0`
 
-### ⛔ 勿用 v1
+### 本版相对 v3 的关键修复
 
-[`lucy-k8s-integration-20260827-v1`](https://github.com/Forrest219/lucy-customer-delivery/releases/tag/lucy-k8s-integration-20260827-v1) 已作废（镜像层内为 arm64 ELF，x86 节点会 `exec format error`）。
+1. 镜像预装 KTX Python/uv runtime（内网不再尝试下载 `uv`）
+2. 强制配置外部可达 `LUCY_PUBLIC_MCP_URL`（避免 WebUI「MCP 未就绪」）
+3. `验收命令.sh` 增加 runtime 离线检查与 `mcpEndpoint.status=configured` 断言
 
-### 说明：相对 v2
+### ⛔ 勿用旧包
 
-v3 为架构修复后的再清洁构建（清理镜像内历史配置残留），镜像 tag 带 `-v3`。请用本版替换此前所有包。
+| Release | 状态 |
+|---|---|
+| [`lucy-k8s-integration-20260827-v1`](https://github.com/Forrest219/lucy-customer-delivery/releases/tag/lucy-k8s-integration-20260827-v1) | **作废**（arm64 ELF → `exec format error`） |
+| [`lucy-k8s-integration-20260827-v2`](https://github.com/Forrest219/lucy-customer-delivery/releases/tag/lucy-k8s-integration-20260827-v2) / [`v3`](https://github.com/Forrest219/lucy-customer-delivery/releases/tag/lucy-k8s-integration-20260827-v3) | 被本版替代（缺 G4b runtime 预装时，内网查询可能失败） |
 
 ## 下载
 
 ```text
-https://github.com/Forrest219/lucy-customer-delivery/releases/download/lucy-k8s-integration-20260827-v3/lucy-k8s-integration-delivery-20260827-v3.tar.gz
-https://github.com/Forrest219/lucy-customer-delivery/releases/download/lucy-k8s-integration-20260827-v3/lucy-k8s-integration-delivery-20260827-v3.tar.gz.sha256
+https://github.com/Forrest219/lucy-customer-delivery/releases/download/lucy-k8s-integration-20260828-v1/lucy-k8s-integration-delivery-20260828-v1.tar.gz
+https://github.com/Forrest219/lucy-customer-delivery/releases/download/lucy-k8s-integration-20260828-v1/lucy-k8s-integration-delivery-20260828-v1.tar.gz.sha256
 ```
 
 ## 阅读顺序

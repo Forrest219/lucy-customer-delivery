@@ -1,6 +1,6 @@
-# Lucy K8s 部署契约（20260827-v3）
+# Lucy K8s 部署契约（20260828-v1）
 
-客户平台工程接入 Lucy 时必须遵守以下硬约束。请在贵司自有 Chart / GitOps 中落实这些配置。
+客户平台工程接入 Lucy 时必须遵守以下硬约束。与参考 chart `reference/helm-chart/` 一致。
 
 ## 1. 工作负载
 
@@ -10,6 +10,7 @@
 | `strategy.type` | **Recreate**（RWO PVC 不可双挂） |
 | 容器镜像平台 | `linux/amd64` |
 | Bundled KTX | `@kaelio/ktx@0.16.0` |
+| KTX Python runtime | 镜像必须 bake-in（出包 G4b）；内网禁止依赖现场下载 `uv` |
 
 ## 2. 端口
 
@@ -34,7 +35,7 @@
 |---|---|
 | `KTX_PROJECT_ROOT` | `/data/lucy` |
 | `POSTHOG_DISABLED` | `1` |
-| `LUCY_PUBLIC_MCP_URL` | **必填**；外部可达 Agent URL，如 `https://lucy.example.com/mcp` |
+| `LUCY_PUBLIC_MCP_URL` | **必填**；外部可达 Agent URL，如 `https://lucy.example.com/mcp`。空值 / `REPLACE-ME` / `127.0.0.1` 会导致 WebUI `mcpEndpoint.status=fallback`（「MCP 未就绪」）；参考 chart 在客户 registry 路径下会 fail 渲染 |
 | `LUCY_ALLOW_PLACEHOLDER_KTX` | 生产必须为空；仅首次 seed 可临时 `1` |
 
 ## 5. Secret
