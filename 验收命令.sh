@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Lucy K8s 集成验收脚本 — 20260828-v1
+# Lucy K8s 集成验收脚本 — 20260901-v1
 # 用法：在已 kubectl 指向目标集群的环境执行。
 #
 # 可覆盖环境变量：
@@ -7,7 +7,7 @@
 #   MCP_URL TOKEN CONNECTION_ID
 #   PUBLIC_MCP_URL   # 期望的 Advertise URL（与 values 中 LUCY_PUBLIC_MCP_URL 一致）
 #
-# 相对 20260827-v2 新增：
+# 相对 20260828-v1 新增：
 #   - Pod 内 KTX Python runtime 离线预装检查（防内网 uv 下载失败）
 #   - /api/project mcpEndpoint.status == configured 断言
 
@@ -29,7 +29,7 @@ fail=0
 ok() { echo "[PASS] $*"; pass=$((pass + 1)); }
 bad() { echo "[FAIL] $*"; fail=$((fail + 1)); }
 
-echo "=== Lucy K8s 验收 20260828-v1 $(date '+%Y-%m-%d %H:%M:%S') ==="
+echo "=== Lucy K8s 验收 20260901-v1 $(date '+%Y-%m-%d %H:%M:%S') ==="
 echo "namespace=$NAMESPACE deployment=$DEPLOYMENT service=$SERVICE"
 
 if [[ -f SHA256SUMS ]]; then
@@ -56,7 +56,7 @@ if [[ -f "$IMAGE_TAR" ]]; then
       'test -x /root/.ktx/runtime/0.16.0/.venv/bin/python' >/dev/null 2>&1; then
       ok "镜像 bake-in Python runtime（G4b-1）"
     else
-      bad "镜像缺少 /root/.ktx/runtime/0.16.0/.venv/bin/python — 内网查询会尝试下载 uv，请换用 20260828-v1 及以后交付包"
+      bad "镜像缺少 /root/.ktx/runtime/0.16.0/.venv/bin/python — 内网查询会尝试下载 uv，请换用 20260901-v1 及以后交付包"
     fi
     if docker run --rm --network=none --platform linux/amd64 --entrypoint ktx \
       project-lucy:customer-amd64-0.16.0 --version 2>/dev/null | grep -q '0.16.0'; then

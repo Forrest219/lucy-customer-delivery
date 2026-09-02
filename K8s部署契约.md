@@ -1,4 +1,4 @@
-# Lucy K8s 部署契约（20260828-v1）
+# Lucy K8s 部署契约（20260901-v1）
 
 客户平台工程接入 Lucy 时必须遵守以下硬约束。与参考 chart `reference/helm-chart/` 一致。
 

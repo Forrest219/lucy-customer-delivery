@@ -2,7 +2,7 @@
 # 请按贵司自有 Helm Chart / GitOps 抄用相关字段；本文件不能直接 `helm install`。
 # 字段名与参考 chart reference/helm-chart/values.yaml 对齐，便于对照。
 #
-# 交付版本: lucy-k8s-integration-20260828-v1
+# 交付版本: lucy-k8s-integration-20260901-v1
 # 镜像: project-lucy:customer-amd64-0.16.0 (linux/amd64)
 # KTX: @kaelio/ktx@0.16.0
 
