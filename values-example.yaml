@@ -1,24 +1,34 @@
 # 这是参数示例（NOT installable values）
-# 请按贵司自有 Helm Chart / GitOps 抄用相关字段；本文件不能直接 `helm install`。
-# 字段名与参考 chart reference/helm-chart/values.yaml 对齐，便于对照。
+# 请按贵司自有 Helm Chart / GitOps 抄用相关字段含义；本文件不能直接 `helm install`。
+# 字段名与包内受支持 Chart helm/lucy/values.yaml（0.2.4）对齐，便于对照。
+# 生产推荐直接使用包内 Chart：helm install/upgrade <release> helm/lucy -f <your-values>
 #
-# 交付版本: lucy-k8s-integration-20260901-v1
-# 镜像: project-lucy:customer-amd64-0.16.0 (linux/amd64)
-# KTX: @kaelio/ktx@0.16.0
+# 交付版本: lucy-k8s-integration-delivery-20261009-v1
+# 镜像: project-lucy:customer-amd64-0.17.0-20261008-e08de17 (linux/amd64, UID 10001)
+# Lucy 0.17.0 / KTX @kaelio/ktx@0.16.0
 
 image:
   repository: REPLACE-ME-registry.example.com/data-team/project-lucy
-  tag: "customer-amd64-0.16.0"
-  pullPolicy: IfNotPresent   # 无 registry、节点已 docker load 时可改为 Never
+  tag: "customer-amd64-0.17.0-20261008-e08de17"
+  # 离线包（docker load 路径）：digest 留空 + pullPolicy Never（config ID 不是 manifest digest，勿填）
+  # registry 路径：可填 manifest digest（sha256:…，向 registry 查询获得）做不可变锁定
+  digest: ""
+  pullPolicy: IfNotPresent   # 无 registry、节点已导入镜像时改为 Never
 imagePullSecrets: []         # 私有 registry 时填 dockerconfigjson Secret 名
 
 replicaCount: 1              # 硬约束：不得改为 >1
+# Deployment strategy 必须为 Recreate（配合 RWO PVC）；包内 Chart 默认已是。
 
-# Deployment strategy 必须为 Recreate（配合 RWO PVC）；在贵司 chart 中保证。
+# 既有环境升级：对象已按别的名字存在时必须固定，否则 Helm 会再建一套
+# fullnameOverride: lucy     # Deployment / Service / ServiceAccount 固定为 lucy
+
+containerPorts:
+  webui: 5174                # 容器内端口，固定
+  mcp: 7879                  # 容器内端口，固定；7878 严禁出现在任何 Service/Ingress
 
 service:
-  type: ClusterIP
-  webuiPort: 5174
+  type: ClusterIP            # K3s 测试可 LoadBalancer；对外端口按需映射
+  webuiPort: 5174            # 如需对外 8276 等，改这里，不要改 containerPorts
   mcpPort: 7879
   # 严禁把 7878 加入 Service ports
 
@@ -27,19 +37,41 @@ persistence:
   accessModes:
     - ReadWriteOnce
   size: 20Gi
-  storageClass: REPLACE-ME-storage-class
+  storageClass: REPLACE-ME-storage-class   # 必填占位：集群无默认 SC 时 PVC 会 Pending
+  existingClaim: ""          # 复用已有 PVC 时填名字（原地升级场景，如 lucy）
 
 env:
   # REQUIRED：外部可达 MCP Advertise URL（Agent 唯一应配置的地址）。
   # 禁止留空、保留 REPLACE-ME、或填 127.0.0.1/localhost/Pod IP。
-  # 参考 chart 在 image.repository 为客户 registry 时会对空/占位 URL fail 渲染。
+  # 包内 Chart 在 image.repository 为客户 registry 时会对空/占位 URL fail 渲染。
   LUCY_PUBLIC_MCP_URL: "REPLACE-ME-https://lucy.example.com/mcp"
-  LUCY_ALLOW_PLACEHOLDER_KTX: ""   # 生产必须空；首次 seed 可临时设 "1"
+  # pre-M31 旧盘（semantic-layer/ wiki/ 与 ktx.yaml 平铺）必须设 "."；新装留空
+  LUCY_CONTENT_ROOT: ""
+  LUCY_ALLOW_PLACEHOLDER_KTX: ""   # 生产必须空；首次 seed 可临时设 "1"，注入配置后改回
   KTX_PROJECT_ROOT: /data/lucy
   POSTHOG_DISABLED: "1"
 
 existingSecret: REPLACE-ME-lucy-db-secrets
+# 0.2.3 起：Secret 不直接挂进 Lucy 容器；secrets-sync init 把各 key 复制到
+# PVC /data/lucy/.ktx/secrets/<key>（0700/0600，UID 10001），Pod 重启时增量同步、永不清理
 extraSecretData: {}                # 生产必须空；勿把明文密码写进 values
+
+podSecurityContext:
+  fsGroup: 10001
+containerSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: [ALL]
+
+# project-migrate init：仅 chown，处理 root 属主旧盘；禁止 git init（入口是唯一权威）
+lucy:
+  version: "0.17.0"            # 须等于 Chart.appVersion
+  bundledKtxVersion: "0.16.0"
+  projectMigrate:
+    enabled: true              # 仅在确定全新 PVC 时才可关
 
 ingress:
   enabled: false
@@ -52,22 +84,23 @@ ingress:
           pathType: Prefix
   tls: []
 
+# 探针：全部 HTTP /api/health（0.2.x 起废弃 exec 探针）
 startupProbe:
-  exec:
-    command:
-      - /app/scripts/docker-healthcheck.sh
+  httpGet:
+    path: /api/health
+    port: webui
   initialDelaySeconds: 5
-  periodSeconds: 10
-  timeoutSeconds: 15
-  failureThreshold: 60
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 60       # 容忍首次 seed/reindex
 
 readinessProbe:
-  exec:
-    command:
-      - /app/scripts/docker-healthcheck.sh
-  periodSeconds: 15
-  timeoutSeconds: 10
-  failureThreshold: 3
+  httpGet:
+    path: /api/health
+    port: webui
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 6
 
 livenessProbe:
   httpGet:
