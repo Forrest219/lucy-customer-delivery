@@ -1,0 +1,19 @@
+# r6 只作字段参考；不是客户原地升级时直接使用的 values。
+# 客户使用供应方准备的私有实例目录 scripts/deploy.sh。
+# 升级入口合并原 Helm values，保留 PVC 管理方式、端口、Secret 和内容根。
+# 不要把本文件覆盖到旧 values，不要为升级强设 persistence.existingClaim。
+image:
+  repository: project-lucy
+  tag: customer-amd64-2.0.0-20261021-7de67e7
+  digest: ""  # offline 不填 config ID；Registry 模式才使用真实 Registry digest
+  pullPolicy: Never
+lucy:
+  version: "2.0.0"
+  bundledKtxVersion: "0.16.0"
+replicaCount: 1
+security:
+  access: https  # 供应方按真实访问方式确认 http 或 https
+bootstrap:
+  existingSecret: MUST-REPLACE-instance-bootstrap-secret
+# 数据库凭据使用原 existingSecret，不能与 bootstrap.existingSecret 混淆。
+# 不在此处放密钥、密码、MCP Token 或现场实际 values。
