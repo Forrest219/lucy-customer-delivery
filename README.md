@@ -2,25 +2,24 @@
 
 本仓库**存放客户 IT 部署手册与参数示例**。镜像大包通过本仓库 Release 资产发放，也可经另渠道（飞书/网盘/邮件）获取——两个渠道内容相同，一律以 SHA256 校验值为准。
 
-## 当前版本（20261009-v1，客户正式版）
+## 当前版本（20261111-r1，Lucy 0.25.0 平滑升级包）
 
 | 项 | 值 |
 |---|---|
-| 包标识 | `lucy-k8s-integration-delivery-20261009-v1` |
-| 镜像 | `project-lucy:customer-amd64-0.17.0-20261008-e08de17`（linux/amd64，G1–G4 + G8 已通过） |
-| 镜像 config ID | `sha256:6f8e471022f4cb2ea4ce1587e63a0043302662be5f1509f01173fea2d69aeb07` |
-| 包 SHA256 | `01b2713a112ea3e10c0477b027472473cbfc124be50e7e878e0020376400144b` |
-| Chart | `helm/lucy/` **0.2.4**（受支持安装包，随 tar.gz 交付，可直接 `helm install` / `helm upgrade`） |
-| Lucy / KTX | Lucy `0.17.0` / `@kaelio/ktx@0.16.0`（两者是独立版本） |
-| 源码 | `project-lucy@e08de17`（tag `customer-delivery-20261009-v1`） |
+| 包标识 | `lucy-k8s-integration-delivery-20261111-r1` |
+| 镜像 | `project-lucy:customer-amd64-0.25.0-20261111-9c78b0e3`（linux/amd64） |
+| 镜像 config ID | `sha256:e3c78920192a82b5452a6ca786c253fd16044331905f2da8ce603e39ce309e2f` |
+| 包 SHA256 | `8a66bbdf02ae79c33c3a89dbc5e869e3b9bb31b2e100a21e43bbc47264c04fac` |
+| Chart | `helm/lucy/` **0.2.8**（受支持安装包，随 tar.gz 交付，可直接 `helm install` / `helm upgrade`） |
+| Lucy / KTX | Lucy `0.25.0` / `@kaelio/ktx@0.16.0`（两者是独立版本） |
+| 源码 | `project-lucy@9c78b0e3`（`9c78b0e367c7466c697e3b1627ba800afa8956f1`） |
 | 交付模式 | offline（`pullPolicy: Never`；`image.digest` 留空，digest 语义见 `集成说明.md` §2） |
 
 ### 本版要点
 
-- **平滑升级预检**（Chart 0.2.4 新增）：包内 `scripts/preflight-upgrade.sh` 在 `helm upgrade` 前检查三类存量问题——live Deployment 人工补丁漂移（command/args、hotfix 挂载、多余 init container）、SQL Server 语义层原生类型、旧 `access.yaml` 角色工具与 AbsoluteDeny 冲突。默认只报告不修改；`--apply-types` / `--apply-access` 才会改文件且先自动备份。
-- **密码 Secret 可写兼容**（0.2.3 起）：DB 密码 Secret 不再直接挂载到 `/data/lucy/.ktx/secrets`（只读挂载会导致 WebUI 新建数据源报 `EROFS`），改由 `secrets-sync` init 复制进 PVC（目录 0700、文件 0600、属主 10001）。
-- **旧 PVC 布局兼容**：`env.LUCY_CONTENT_ROOT` 支持 pre-M31 的平铺布局；`fullnameOverride` 固定既有 Deployment/Service 资源名。
-- **验收脚本修正**：Secret 目录带 fsGroup setgid 位（`2700`）不再误报；MCP `initialize` 按 JSON-RPC 结构校验，不再固定匹配旧服务名。
+- **相对上一客户正式版 `20261009-v1`（0.17.0）的产品线升级**：对齐 Lucy `0.25.0` / Chart `0.2.8`，保留 RWO PVC 原地升级契约（单副本 `Recreate`、UID 10001、`secrets-sync`、升级前预检）。
+- **本轮修复重点（连接 / Catalog / SelectDB）**：写 `ktx.yaml` 后执行层重载状态不再误标 pending；SelectDB 外部 Catalog 结构读取在连接错误时直接报错，仅在语句被拒时回退 `SHOW COLUMNS` / `DESCRIBE`；前端脱敏，原始驱动错误留服务端。
+- **平滑升级预检仍在**：包内 `scripts/preflight-upgrade.sh` 在 `helm upgrade` 前检查 live Deployment 漂移、语义层非法类型、旧 `access.yaml` AbsoluteDeny 工具冲突。
 - 镜像运行身份 **UID/GID 10001**；探针全部 HTTP `GET /api/health`；`project-migrate` init 仅 chown；`git init` 由镜像入口幂等完成。
 
 ### 镜像大包获取
@@ -29,8 +28,8 @@
 - 或另渠道（飞书/网盘/邮件）同名文件
 
 ```text
-lucy-k8s-integration-delivery-20261009-v1.tar.gz
-lucy-k8s-integration-delivery-20261009-v1.tar.gz.sha256
+lucy-k8s-integration-delivery-20261111-r1.tar.gz
+lucy-k8s-integration-delivery-20261111-r1.tar.gz.sha256
 ```
 
 收到后第一步永远是 `shasum -a 256 -c *.tar.gz.sha256`。
@@ -40,9 +39,10 @@ lucy-k8s-integration-delivery-20261009-v1.tar.gz.sha256
 | 包 / 镜像 | 作废原因 |
 |---|---|
 | `lucy-k8s-integration-20260827-v1` | 镜像 ELF 实为 arm64，x86 服务器 `exec format error` |
-| `lucy-k8s-integration-delivery-20260902-v1` / `v2` | 升级契约不完整（root 运行、无 `.git` 初始化职责划分），**禁止用于原地升级** |
+| `lucy-k8s-integration-delivery-20260902-v1` / `v2` | 升级契约不完整，**禁止用于原地升级** |
 | `lucy-k8s-integration-20260828-v1` 及 Chart 0.2.2 及以前的包 | Secret 只读挂载导致 WebUI 写数据源 `EROFS`；无升级预检 |
-| `project-lucy:customer-amd64-0.16.0` 及同 era tar | 过 G4b 之前产物，runtime 未 bake-in，内网查询会报 `could not download uv` |
+| `project-lucy:customer-amd64-0.16.0` 及同 era tar | runtime 未 bake-in，内网查询会报 `could not download uv` |
+| `lucy-k8s-integration-delivery-20261009-v1`（0.17.0） | 已被本包（0.25.0）取代；仅作历史回滚参考 |
 
 ### 阅读顺序
 

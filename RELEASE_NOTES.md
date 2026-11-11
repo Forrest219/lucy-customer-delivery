@@ -1,73 +1,63 @@
-# Release Notes — lucy-k8s-integration-20261009-v1（客户正式版）
+# Release Notes — lucy-k8s-integration-20261111-r1（Lucy 0.25.0 平滑升级包）
 
 ## 摘要
 
-对齐包 `lucy-k8s-integration-delivery-20261009-v1`：Lucy 0.17.0 / KTX 0.16.0 / Chart **0.2.4**。本版在 test3 真实 K3s 平滑升级验收（Helm revision 13、既有 `lucy` RWO PVC、外部端口 8276/8277）反馈的基础上修复了全部 5 个现场问题，是当前唯一推荐的客户发放版。
+对齐包 `lucy-k8s-integration-delivery-20261111-r1`：Lucy **0.25.0** / KTX **0.16.0** / Chart **0.2.8**。本包基于 `project-lucy@9c78b0e3`，面向已有 K8s/Helm 环境的**原地平滑升级**（保留 PVC / Secret / 既有资源名），并收口连接加载、Catalog 读取与 SelectDB 结构读取相关修复。
+
+本轮按交付方要求跳过原生 amd64 升级重验；本机已完成镜像 G1–G4/G4b/G8、Helm 静态门禁与离线封包校验。`productionReady` 仍记为 false，现场升级后请按包内 `ACCEPTANCE.md` / 本仓库 `验收命令.sh` 回传结果。
 
 ## 镜像与包
 
 | 项 | 值 |
 |---|---|
-| Tag | `project-lucy:customer-amd64-0.17.0-20261008-e08de17` |
-| Config ID | `sha256:6f8e471022f4cb2ea4ce1587e63a0043302662be5f1509f01173fea2d69aeb07` |
-| Platform | `linux/amd64`（ELF node+tini 经 G2 校验） |
-| 包 SHA256 | `01b2713a112ea3e10c0477b027472473cbfc124be50e7e878e0020376400144b` |
-| Lucy / KTX | `0.17.0` / `@kaelio/ktx@0.16.0` |
-| 源码 | `project-lucy@e08de17`（tag `customer-delivery-20261009-v1`） |
-| 出包门禁 | G1–G4 + G8 本机通过；包验证脚本（helm lint / H1 / K6）全量通过；负向契约测试 29/29 |
+| Tag | `project-lucy:customer-amd64-0.25.0-20261111-9c78b0e3` |
+| Config ID | `sha256:e3c78920192a82b5452a6ca786c253fd16044331905f2da8ce603e39ce309e2f` |
+| Platform manifest | `sha256:c04234ec52a32d0c2cf691da58bce434a7e93e8511993a455ab6be1106321f0e` |
+| Index / image ID | `sha256:f9630570416dc760698a76dc4c9eade48e86a496b9fc43cb4a2f983cea7b7794` |
+| Platform | `linux/amd64`（ELF node+tini+runtime-python 经 G2 校验） |
+| 包 SHA256 | `8a66bbdf02ae79c33c3a89dbc5e869e3b9bb31b2e100a21e43bbc47264c04fac` |
+| Lucy / KTX | `0.25.0` / `@kaelio/ktx@0.16.0` |
+| Chart | `0.2.8`（`appVersion` `0.25.0`） |
+| 源码 | `project-lucy@9c78b0e367c7466c697e3b1627ba800afa8956f1`（clean） |
 
-## test3 升级验收反馈的修复核销（本版核心）
+## 本版修复（相对现场 0.25 基线）
 
-| # | 现场问题 | 本版修复 |
-|---|---|---|
-| 3.1 | 验收脚本把 fsGroup setgid 的 `2700` 误报为权限错误 | `acceptance.sh` 改权限位语义检查：低 9 位须 `0700`、属主 `10001:10001`、仅允许 setgid；密码文件同理按 `0600` 位语义校验 |
-| 3.2 | 验收脚本固定匹配 `lucy-mcp-proxy`，误报 MCP 初始化失败 | 改按 JSON-RPC 结构校验（`result` / `protocolVersion` / `serverInfo`），兼容上游透传名 `ktx`；失败时不回显响应体 |
-| 3.3 | 存量 Deployment 人工补丁（旧 command/args、hotfix 挂载）导致新 Pod CrashLoop | 新增 `scripts/preflight-upgrade.sh`：渲染 Chart 对比 live Deployment，报告漂移并打印 JSON Patch（只打印不执行，人工确认后应用） |
-| 3.4 | SQL Server 语义层原生类型（`varchar`/`datetime2` 等）无法通过新版校验 | 预检 `scan-types` 报告具体文件/字段/类型；`--apply-types` 按固定映射表改写（string/number/time/boolean），先自动备份；`geometry` 等无映射类型只报告不改 |
-| 3.5 | 旧 `access.yaml` 角色工具（`sl_query`/`sl_read_source`）触发 AbsoluteDeny，Agent degraded | 预检 `scan-access` 只查 `roles.*.allow.tools`；`--apply-access` 仅从角色列表移除并先备份；`defaults.known_tools` 等全局定义不动 |
+1. **连接写路径 / 执行层重载**：写 `ktx.yaml` 后自动尝试重载；成功不再误标 pending，失败仍可由所有者确认重试。
+2. **SelectDB / 外部 Catalog 结构读取**：连接错误与超时直接报错；仅在语句被拒时回退 `SHOW COLUMNS` / `DESCRIBE`；前端文案脱敏。
+3. **Catalog / Schema 结构读取路径加固**：宽表与结构 diff 相关读取对齐，降低误用 SHOW 路径与错误掩盖。
 
-## Chart 变更轨迹（0.2.2 → 0.2.4）
+产品线相对 `20261009-v1`（0.17.0）另含 0.25.0 已合并能力（执行层重载、lucy-ops、用量口径、访问关系图等）；详见包内 `RELEASE_NOTES.md` 与供应方 `CHANGELOG`。
 
-- **0.2.3**：DB 密码 Secret 改由 `secrets-sync` init 复制进 PVC（修复 WebUI 写数据源 `EROFS`）；`env.LUCY_CONTENT_ROOT` 兼容 pre-M31 平铺布局；`fullnameOverride` 固定既有资源名；包内脚本可从包根直接运行。
-- **0.2.4**：新增 `preflight-upgrade.sh` 升级前在线预检（上述 3.3/3.4/3.5）；`UPGRADE.md` 明确「先预检、确认 PATCH、再 `helm upgrade`」的流程，`helm upgrade --force` 仅作退路。
+## 升级路径（标准）
 
-## 手册主要变更（相对 20261008-test 草稿）
+```bash
+shasum -a 256 -c lucy-k8s-integration-delivery-20261111-r1.tar.gz.sha256
+tar -xzf lucy-k8s-integration-delivery-20261111-r1.tar.gz
+cd lucy-k8s-integration-delivery-20261111-r1
 
-- 全部身份信息更新为客户正式版（包名 / 镜像 tag / config ID / 包 SHA256 / Chart 0.2.4）
-- `集成说明.md` 新增 §6.1 升级前在线预检、密码 Secret 同步行为表、旧 PVC 平铺布局说明
-- 验收口径改走 `LUCY_MCP_TOKEN` 环境变量（包内脚本拒绝 `--token` 参数）
-- `K8s部署契约.md` Secret 一节改写为 secrets-sync 契约（禁止 Secret 直接挂载 `.ktx/secrets`）
-- 排障表补入 test3 现场症状（漂移 CrashLoop、AbsoluteDeny degraded、SQL 类型校验、2700 误报、MCP 名称误报、content root、selector 不可变）
-- 大包改为 GitHub Release 资产 + 另渠道双通道发放
+# 导入镜像（K3s 用 k3s ctr images import；Docker 节点可用 docker load）
+# 修改 values：image.repository/tag、env.LUCY_PUBLIC_MCP_URL、persistence、existingSecret
 
-## Deprecated（勿用于原地升级）
+bash scripts/preflight-upgrade.sh \
+  --namespace <ns> --release <release> \
+  --deployment <deploy名> -f <your-values>
 
-- `lucy-k8s-integration-20260827-v1`（arm64 ELF 坏包）
-- `lucy-k8s-integration-delivery-20260902-v1` / `v2`（升级契约不完整）
-- `lucy-k8s-integration-20260828-v1` 及 Chart ≤ 0.2.2 的包（Secret 只读挂载 `EROFS`、无升级预检）
-- `project-lucy:customer-amd64-0.16.0` 及同 era 未过 G4b 的 tar
-- 内部测试包 `20261008-test` / `20261008-test3` / `20261009-test` / `20261009-test2` 不对外发放；`20261009-v1` 与 `20261009-test2` 内容一致（同一 sha256，仅文件名不同）
+helm upgrade <release> helm/lucy -n <ns> -f <your-values> --atomic --wait --timeout 15m
 
----
+export LUCY_MCP_TOKEN="<bearer>"
+bash scripts/acceptance.sh --namespace <ns> --release <release> \
+  --deployment <deploy名> --service <svc名> \
+  --public-mcp-url https://lucy.<贵司域名>/mcp
+```
 
-<details>
-<summary>历史：20261008-test（内部测试包，仅存档）</summary>
+已用现场兼容 Chart（仅管理既有 Deployment/Service、PVC/Secret/Ingress 外置）的环境：可继续沿用该 Chart，只替换镜像 tag / digest 后 `helm upgrade`；契约仍须满足 UID 10001、单副本 Recreate、不暴露 7878。
 
-Chart 0.2.2 / 镜像 `customer-amd64-0.17.0-20261008-14d7c26` / config ID `sha256:ee595599202fe52a7e382f7d1bc589a840ebe15715560c1857754aa628527934`。手册按 v3 包结构重写的第一版草稿，未对外发放。
-</details>
+## 作废 / 取代
 
-<details>
-<summary>历史：20260902-v1（已作废，仅存档）</summary>
+- `lucy-k8s-integration-delivery-20261009-v1`（Lucy 0.17.0）——由本包取代为当前推荐平滑升级发放版
+- 更早的 arm64 坏包、20260902-v1/v2、Chart ≤ 0.2.2、未 bake-in runtime 的 0.16.0 era 包——继续勿用
 
-v2 交付包布局：受支持 Helm Chart 0.2.0 与镜像同包交付；探针改 HTTP；新增 K8S_CONTRACT / UPGRADE / ROLLBACK / acceptance.sh。
+## 不包含
 
-| 项 | 值 |
-|---|---|
-| Tag | `project-lucy:customer-amd64-0.16.0-20260902-b262798` |
-| Digest | `sha256:5038c872ba54e916474d076be2eb683fbc583b9a5c858fee5da2c964d92157b4` |
-| Platform | `linux/amd64` |
-| KTX | `@kaelio/ktx@0.16.0` |
-| 源码 | `project-lucy@b262798` |
-
-作废原因：root 运行 + 升级契约不完整（无 `.git` 初始化职责划分），K3s 原地升级失败；由 20261009-v1 取代。
-</details>
+- 数据库密码、MCP Token、私有 bootstrap 密钥明文（本包为 `--public-release`）
+- 原生 amd64 集群上的本次升级/恢复重验证据（本轮未执行）
