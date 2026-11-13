@@ -1,4 +1,4 @@
-# Lucy K8s 部署契约（20261111-r1）
+# Lucy K8s 部署契约（20261113-r1）
 
 客户平台工程接入 Lucy 时必须遵守以下硬约束。与包内受支持 Chart `helm/lucy/`（0.2.8）一致；自研 Chart 场景请逐条对照。
 
@@ -9,7 +9,7 @@
 | `replicas` | **必须为 1**（本期不支持多副本 HA） |
 | `strategy.type` | **Recreate**（RWO PVC 不可双挂；升级有短暂中断） |
 | 容器镜像平台 | `linux/amd64` |
-| Lucy / KTX 版本 | Lucy `0.25.0` / `@kaelio/ktx@0.16.0`（相互独立，别混用版本号） |
+| Lucy / KTX 版本 | Lucy `0.30.0` / `@kaelio/ktx@0.16.0`（相互独立，别混用版本号） |
 | KTX Python runtime | 镜像必须 bake-in（出包 G4b 校验）；路径 `/home/lucy/.ktx/runtime/0.16.0/.venv/bin/python`；内网禁止依赖现场下载 `uv` |
 | `workingDir` | `/data/lucy` |
 

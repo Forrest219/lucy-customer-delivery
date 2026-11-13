@@ -3,13 +3,13 @@
 # 字段名与包内受支持 Chart helm/lucy/values.yaml（0.2.8）对齐，便于对照。
 # 生产推荐直接使用包内 Chart：helm install/upgrade <release> helm/lucy -f <your-values>
 #
-# 交付版本: lucy-k8s-integration-delivery-20261111-r1
-# 镜像: project-lucy:customer-amd64-0.25.0-20261111-9c78b0e3 (linux/amd64, UID 10001)
-# Lucy 0.25.0 / KTX @kaelio/ktx@0.16.0
+# 交付版本: lucy-k8s-integration-delivery-20261113-r1
+# 镜像: project-lucy:customer-amd64-0.30.0-20261113-3a9f0711 (linux/amd64, UID 10001)
+# Lucy 0.30.0 / KTX @kaelio/ktx@0.16.0
 
 image:
   repository: REPLACE-ME-registry.example.com/data-team/project-lucy
-  tag: "customer-amd64-0.25.0-20261111-9c78b0e3"
+  tag: "customer-amd64-0.30.0-20261113-3a9f0711"
   # 离线包（docker load 路径）：digest 留空 + pullPolicy Never（config ID 不是 manifest digest，勿填）
   # registry 路径：可填 manifest digest（sha256:…，向 registry 查询获得）做不可变锁定
   digest: ""
@@ -68,7 +68,7 @@ containerSecurityContext:
 
 # project-migrate init：仅 chown，处理 root 属主旧盘；禁止 git init（入口是唯一权威）
 lucy:
-  version: "0.25.0"            # 须等于 Chart.appVersion
+  version: "0.30.0"            # 须等于 Chart.appVersion
   bundledKtxVersion: "0.16.0"
   projectMigrate:
     enabled: true              # 仅在确定全新 PVC 时才可关

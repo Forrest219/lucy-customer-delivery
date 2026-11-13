@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Lucy K8s 集成验收脚本 — 20261111-r1（0.25.0 平滑升级包）
+# Lucy K8s 集成验收脚本 — 20261113-r1（0.30.0 平滑升级包）
 # 用法：在已 kubectl 指向目标集群的环境执行。
 #
 # 说明：包内 scripts/acceptance.sh 是权威验收（含 secrets 权限位、MCP 结构校验、
@@ -12,7 +12,7 @@
 #   PUBLIC_MCP_URL   # 期望的 Advertise URL（与 values 中 LUCY_PUBLIC_MCP_URL 一致）
 #
 # 相对 20261008-test 的变化：
-#   - 镜像 tag 更新为 customer-amd64-0.25.0-20261111-9c78b0e3（Chart 0.2.8）
+#   - 镜像 tag 更新为 customer-amd64-0.30.0-20261113-3a9f0711（Chart 0.2.8）
 #   - 提示以包内 acceptance.sh 为权威（2700 setgid / MCP serverInfo 误报已修正）
 
 set -euo pipefail
@@ -22,7 +22,7 @@ RELEASE="${RELEASE:-lucy}"
 DEPLOYMENT="${DEPLOYMENT:-$RELEASE}"   # 兼容旧变量名
 SERVICE="${SERVICE:-$RELEASE}"
 CONTAINER="${CONTAINER:-lucy}"
-IMAGE_NAME="${IMAGE_NAME:-project-lucy:customer-amd64-0.25.0-20261111-9c78b0e3}"
+IMAGE_NAME="${IMAGE_NAME:-project-lucy:customer-amd64-0.30.0-20261113-3a9f0711}"
 IMAGE_TAR="${IMAGE_TAR:-}"
 MCP_URL="${MCP_URL:-}"
 TOKEN="${TOKEN:-}"
@@ -36,7 +36,7 @@ fail=0
 ok() { echo "[PASS] $*"; pass=$((pass + 1)); }
 bad() { echo "[FAIL] $*"; fail=$((fail + 1)); }
 
-echo "=== Lucy K8s 验收 20261111-r1 $(date '+%Y-%m-%d %H:%M:%S') ==="
+echo "=== Lucy K8s 验收 20261113-r1 $(date '+%Y-%m-%d %H:%M:%S') ==="
 echo "namespace=$NAMESPACE release=$RELEASE deployment=$DEPLOYMENT service=$SERVICE"
 
 # ---------- 0. 包完整性 ----------
@@ -71,7 +71,7 @@ if [[ -n "$IMAGE_TAR" && -f "$IMAGE_TAR" ]]; then
       "test -x /home/lucy/.ktx/runtime/${EXPECT_KTX}/.venv/bin/python" >/dev/null 2>&1; then
       ok "镜像 bake-in Python runtime（G4b-1，/home/lucy 路径）"
     else
-      bad "镜像缺少 /home/lucy/.ktx/runtime/${EXPECT_KTX}/.venv/bin/python — 内网查询会尝试下载 uv，请换用 20261111-r1 交付包"
+      bad "镜像缺少 /home/lucy/.ktx/runtime/${EXPECT_KTX}/.venv/bin/python — 内网查询会尝试下载 uv，请换用 20261113-r1 交付包"
     fi
     # G4b-2：无网启动 ktx
     if docker run --rm --network=none --platform linux/amd64 --entrypoint ktx \
