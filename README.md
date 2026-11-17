@@ -2,26 +2,25 @@
 
 本仓库**存放客户 IT 部署手册与参数示例**。镜像大包通过本仓库 Release 资产发放，也可经另渠道（飞书/网盘/邮件）获取——两个渠道内容相同，一律以 SHA256 校验值为准。
 
-## 当前版本（20261113-r1，Lucy 0.30.0 平滑升级包）
+## 当前版本（20261117-r1，Lucy 0.30.0 平滑升级包）
 
 | 项 | 值 |
 |---|---|
-| 包标识 | `lucy-k8s-integration-delivery-20261113-r1` |
-| 镜像 | `project-lucy:customer-amd64-0.30.0-20261113-3a9f0711`（linux/amd64） |
-| 镜像 config ID | `sha256:17d5ded730ac7c8e83fd0106dcfd60ba69856234bf6d93feb13e95ad37d67159` |
-| 包 SHA256 | `9adf590da7fa98b9a7604851a5cc63110e8db2ffe71feb2daeb99c5c63f316c0` |
-| Chart | **0.2.8**（`appVersion` `0.30.0`）。本次现场升级用单独包 `lucy-helm-v261113.tgz`（SHA256 `2792727105a6c669b99441b7d6d144b17311ff6d3075f91efae1e3e4ccbef50f`），解压目录为 `helm/`。镜像大包里的 `helm/lucy` 不用于本次现场升级 |
+| 包标识 | `lucy-k8s-integration-delivery-20261117-r1` |
+| 镜像 | `project-lucy:customer-amd64-0.30.0-20261117-abb38913`（linux/amd64） |
+| 镜像 config ID | `sha256:3f02583efe855ea87dafaa77e4ef23fc91f4d7681ff7c97c76ea4aa3031e46f4` |
+| 包 SHA256 | `f0c3e122db08e74fed8473748dd82889fbf8c81bf6b08c32391662e438057985` |
+| Chart | **0.2.9**（`appVersion` `0.30.0`）。本次现场升级用单独包 `lucy-helm-v261117.tgz`（SHA256 `63c85848e801350a016ac3ced51a640cde0e7177f85ef39a70b892e7f9197089`），解压目录为 `helm/`。镜像大包里的 `helm/lucy` 不用于本次现场升级 |
 | Lucy / KTX | Lucy `0.30.0` / `@kaelio/ktx@0.16.0`（两者是独立版本） |
-| 源码 | `project-lucy@3a9f0711`（`3a9f0711a81c9281e6abaa7977c2c9f7b9c42287`） |
+| 源码 | `project-lucy@abb38913`（`abb3891333561f1cc66d61b0cc160225e6366021`） |
 | 交付模式 | offline（`pullPolicy: Never`；`image.digest` 留空，digest 语义见 `集成说明.md` §2） |
 
 ### 本版要点
 
-- **相对上一现场包 `20261111-r1`（Lucy 0.25.0）**：产品版本升到 `0.30.0`，Chart 仍是 `0.2.8`，KTX 仍是 `0.16.0`。保留 RWO PVC 原地升级契约（单副本 `Recreate`、UID 10001、`secrets-sync`、升级前预检）。
-- **问数约束**：问题类型可绑定固定表与口径；多表命中先澄清；Catalog 带业务语义；可按 Source 裁剪暴露字段。
-- **答复**：成功查询带可核对信息；严格 0 行时给出结构化下一步。问询预算默认 60 次／300 秒。
-- **平滑升级预检仍在**：包内 `scripts/preflight-upgrade.sh` 在 `helm upgrade` 前检查 live Deployment 漂移、语义层非法类型、旧 `access.yaml` AbsoluteDeny 工具冲突。
-- 镜像运行身份 **UID/GID 10001**；探针全部 HTTP `GET /api/health`；`project-migrate` init 仅 chown；`git init` 由镜像入口幂等完成。
+- **相对上一现场包 `20261113-r1`（Lucy 0.30.0 / Chart 0.2.8）**：产品版本仍是 `0.30.0`，KTX 仍是 `0.16.0`，Chart 升到 `0.2.9`。启动和就绪探针改为 `/api/readyz`，存活探针改为 `/api/livez`。
+- **多表命中**：已声明 join 并连通的表直接放行；没有 join 的放行并在可核对信息里披露来源；解析不到、跨连接或一次超过 4 个来源仍然硬拦。
+- **审计与 MCP**：同一次调用按阶段留下 Trace；封存导出增加 `spans.csv`。握手说明在权限未变时走缓存，拒绝更快，失败信息带可操作的下一步。
+- 镜像运行身份 **UID/GID 10001**；`project-migrate` init 仅 chown；`git init` 由镜像入口幂等完成。
 
 ### 镜像大包获取
 
@@ -29,13 +28,13 @@
 - 或另渠道（飞书/网盘/邮件）同名文件
 
 ```text
-lucy-k8s-integration-delivery-20261113-r1.tar.gz
-lucy-k8s-integration-delivery-20261113-r1.tar.gz.sha256
-lucy-helm-v261113.tgz
-lucy-helm-v261113.tgz.sha256
+lucy-k8s-integration-delivery-20261117-r1.tar.gz
+lucy-k8s-integration-delivery-20261117-r1.tar.gz.sha256
+lucy-helm-v261117.tgz
+lucy-helm-v261117.tgz.sha256
 ```
 
-收到后先分别校验两个包：`shasum -a 256 -c lucy-k8s-integration-delivery-20261113-r1.tar.gz.sha256` 与 `shasum -a 256 -c lucy-helm-v261113.tgz.sha256`。
+收到后先分别校验两个包：`shasum -a 256 -c lucy-k8s-integration-delivery-20261117-r1.tar.gz.sha256` 与 `shasum -a 256 -c lucy-helm-v261117.tgz.sha256`。
 
 ### ⛔ 勿用旧包
 
@@ -45,7 +44,8 @@ lucy-helm-v261113.tgz.sha256
 | `lucy-k8s-integration-delivery-20260902-v1` / `v2` | 升级契约不完整，**禁止用于原地升级** |
 | `lucy-k8s-integration-20260828-v1` 及 Chart 0.2.2 及以前的包 | Secret 只读挂载导致 WebUI 写数据源 `EROFS`；无升级预检 |
 | `project-lucy:customer-amd64-0.16.0` 及同 era tar | runtime 未 bake-in，内网查询会报 `could not download uv` |
-| `lucy-k8s-integration-delivery-20261111-r1`（0.25.0） | 已被本包（0.30.0）取代；仅作历史回滚参考 |
+| `lucy-k8s-integration-delivery-20261113-r1`（0.30.0 / Chart 0.2.8） | 已被本包取代；仅作历史回滚参考 |
+| `lucy-k8s-integration-delivery-20261111-r1`（0.25.0） | 更早现场包；仅作历史回滚参考 |
 | `lucy-k8s-integration-delivery-20261009-v1`（0.17.0） | 更早的现场包；仅作历史回滚参考 |
 
 ### 阅读顺序

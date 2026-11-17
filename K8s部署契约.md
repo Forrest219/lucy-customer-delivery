@@ -1,6 +1,6 @@
-# Lucy K8s 部署契约（20261113-r1）
+# Lucy K8s 部署契约（20261117-r1）
 
-客户平台工程接入 Lucy 时必须遵守以下硬约束。与包内受支持 Chart `helm/lucy/`（0.2.8）一致；自研 Chart 场景请逐条对照。
+客户平台工程接入 Lucy 时必须遵守以下硬约束。与包内受支持 Chart `helm/lucy/`（0.2.9）一致；自研 Chart 场景请逐条对照。
 
 ## 1. 工作负载
 
@@ -56,7 +56,8 @@
 
 | Probe | 契约 |
 |---|---|
-| Startup / Readiness / Liveness | 一律 `httpGet /api/health`，端口 `webui`（5174） |
+| Startup / Readiness | `httpGet /api/readyz`，端口 `webui`（5174） |
+| Liveness | `httpGet /api/livez`，端口 `webui`（5174） |
 | 禁止 | exec 探针（`docker-healthcheck.sh`）、preflight init、把 StarRocks 连通 / reindex / MCP handshake 塞进探针 |
 
 ## 7. SecurityContext（当前镜像）
